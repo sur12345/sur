@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>俄罗斯方块</title>
+    <style>
+        #container {
+            width: 400px;
+            height: 720px;
+            background-color: tomato;
+            margin: auto;
+            position: relative;
+        }
+
+        .box {
+            width: 40px;
+            height: 40px;
+            background-color: white;
+            position: absolute;
+            box-sizing: border-box;
+            border: 1px solid black;
+        }
+
+        .stop {
+            width: 40px;
+            height: 40px;
+            background-color: gray;
+            position: absolute;
+            box-sizing: border-box;
+            border: 1px solid black;
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        const boxsArr = [
+            [
+                {
+                    row: 2,
+                    col: 0
+                },
+                {
+                    row: 2,
+                    col: 1
+                },
+                {
+                    row: 2,
+                    col: 2
+                },
+                {
+                    row: 1,
+                    col: 2
+                },
+            ],
+            [
+                {
+                    row: 1,
+                    col: 0
+                },
+                {
+                    row: 1,
+                    col: 1
+                },
+                {
+                    row: 2,
+                    col: 1
+                },
+                {
+                    row: 2,
+                    col: 2
+                },
+            ],
+            [
+                {
+                    row: 1,
+                    col: 1
+                },
+                {
+                    row: 1,
+                    col: 2
+                },
+                {
+                    row: 2,
+                    col: 1
+                },
+                {
+                    row: 2,
+                    col: 2
+                },
+            ],
+            [
+                {
+                    row: 1,
+                    col: 0
+                },
+                {
+                    row: 1,
+                    col: 1
+                },
+                {
+                    row: 1,
+                    col: 2
+                },
+                {
+                    row: 1,
+                    col: 3
+                },
+            ]
+        ]
+    </script>
+    <script>
+        const step = 40
+        let container
+        let width
+        let height
+        let nowBoxs
+        const rows = 18
+        const cols = 10
+        let X
+        let Y
+        let obj = {}
+
+        function init () {
+            container = document.createElement('div')
+            container.id = 'container'
+            document.body.appendChild(container)
+            width = parseInt(getComputedStyle(container).width)
+            height = parseInt(getComputedStyle(container).height)
+            obj = {}
+            createBoxs()
+        }
+
+        init()
+
+        function createBoxs () {
+            X = 3
+            Y = 0
+            nowBoxs = JSON.parse(JSON.stringify(boxsArr[Math.floor(Math.random() * 4)]))
+            for (let i = 0; i < 4; i++) {
+                let box = document.createElement("div")
+                container.appendChild(box)
+                box.classList.add('box')
+            }
+            localtion()
+        }
+
+        function routeRight () {
+            let tempBoxs = JSON.parse(JSON.stringify(nowBoxs))
+            tempBoxs.forEach(element => {
+                var row = element.row
+                element.row = element.col
+                element.col = 3 - row
+            })
+            for (let i = 0; i < 4; i++) {
+                if (obj[(Y + tempBoxs[i].row) + "_" + (X + tempBoxs[i].col)]) {
+                    return
+                }
+            }
+            nowBoxs = tempBoxs
+            localtion()
+        }
+
+        function routeLeft () {
+            let tempBoxs = JSON.parse(JSON.stringify(nowBoxs))
+            tempBoxs.forEach(element => {
+                var col = element.col
+                element.col = element.row
+                element.row = 3 - col
+            })
+            for (let i = 0; i < 4; i++) {
+                if (obj[(Y + tempBoxs[i].row) + "_" + (X + tempBoxs[i].col)]) {
+                    return
+                }
+            }
+            nowBoxs = tempBoxs
+            localtion()
+        }
+
+        function localtion () {
+            check()
+            let boxs = document.getElementsByClassName('box')
+            for (let i = 0; i < boxs.length; i++) {
+                boxs[i].style.top = (nowBoxs[i].row + Y) * step + 'px'
+                boxs[i].style.left = (nowBoxs[i].col + X) * step + 'px'
+            }
+        }
+
+        function check () {
+            for (let i = 0; i < 4; i++) {
+                if ((X + nowBoxs[i].col) < 0) {
+                    X += 1
+                }
+                if ((X + nowBoxs[i].col) > cols - 1) {
+                    X -= 1
+                }
+                if ((Y + nowBoxs[i].row) > rows - 1) {
+                    Y -= 1
+                    beBottom()
+                }
+            }
+        }
+
+        function beBottom () {
+            let boxs = document.getElementsByClassName('box')
+            let temp = 100
+            for (let j = boxs.length - 1; j >= 0; j--) {
+                if (nowBoxs[j].row + Y < temp)
+                    temp = nowBoxs[j].row + Y
+                obj[nowBoxs[j].row + Y + "_" + (nowBoxs[j].col + X)] = boxs[j]
+                boxs[j].classList.add('stop')
+                boxs[j].classList.remove('box')
+            }
+            if (temp <= 2) {
+                gameOver()
+                return
+            }
+            createBoxs()
+            Full()
+        }
+
+        function gameOver () {
+            alert('游戏结束')
+            container.remove()
+            init()
+        }
+
+        function Full () {
+            for (let i = 0; i < rows; i++) {
+                let flag = 1
+                for (let j = 0; j < cols; j++) {
+                    if (!obj[i + "_" + j])
+                        flag = 0
+                }
+                if (flag)
+                    clearLine(i)
+            }
+        }
+
+        function downOne (row) {
+            for (let i = row - 1; i >= 0; i--) {
+                for (let j = 0; j < cols; j++) {
+                    if (obj[i + "_" + j]) {
+                        obj[i + "_" + j].style.top = parseInt(obj[i + "_" + j].style.top) + step + 'px'
+                        obj[i + 1 + "_" + j] = obj[i + "_" + j]
+                        delete obj[i + "_" + j]
+                    }
+                }
+            }
+        }
+
+        function clearLine (row) {
+            for (let i = 0; i < cols; i++) {
+                container.removeChild(obj[row + '_' + i])
+                delete obj[row + '_' + i]
+            }
+            downOne(row)
+        }
+
+        function isMeet (x, y) {
+            for (let i = 0; i < 4; i++) {
+                if (obj[(Y + y + nowBoxs[i].row) + "_" + (X + x + nowBoxs[i].col)]) {
+                    if (y > 0) {
+                        beBottom()
+                    }
+                    return true
+                }
+            }
+            return false
+        }
+
+        function move (x, y) {
+            if (isMeet(x, y)) {
+                return
+            }
+            X += x
+            Y += y
+            localtion()
+        }
+
+        window.addEventListener('keydown', function (event) {
+            switch (event.key) {
+                case 'a':
+                    move(-1, 0)
+                    break
+                case 'd':
+                    move(1, 0)
+                    break
+                case 's':
+                    move(0, 1)
+                    break
+                case 'j':
+                    routeRight()
+                    break
+                case 'k':
+                    routeLeft()
+                    break
+            }
+        })
+
+        setInterval(() => {
+            move(0, 1)
+        }, 900)
+    </script>
+</body>
+
+</html>
